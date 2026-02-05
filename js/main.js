@@ -170,65 +170,213 @@ function initBooksFilter() {
 }
 
 // =====================
-// Gallery Lightbox
+// Gallery Multi-Image Navigation
 // =====================
-function initLightbox() {
-    if (!DOM.lightbox || !DOM.galleryItems.length) return;
+function initGalleryNavigation() {
+    const galleryItems = document.querySelectorAll('.gallery-item');
     
-    const lightboxImage = DOM.lightbox.querySelector('.lightbox-image');
-    const lightboxCaption = DOM.lightbox.querySelector('.lightbox-caption');
-    const lightboxClose = DOM.lightbox.querySelector('.lightbox-close');
-    
-    // Open lightbox
-    DOM.galleryItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const img = item.querySelector('img');
-            const caption = item.querySelector('figcaption');
-            
-            if (img) {
-                lightboxImage.src = img.src;
-                lightboxImage.alt = img.alt;
-            }
-            
-            if (caption && lightboxCaption) {
-                const title = caption.querySelector('h4');
-                const desc = caption.querySelector('p:not(.lang-en):not(.lang-ar)') || 
-                             caption.querySelector(state.currentLang === 'ar' ? '.lang-ar' : '.lang-en');
-                
-                lightboxCaption.innerHTML = `
-                    <h4>${title ? title.textContent : ''}</h4>
-                    <p>${desc ? desc.textContent : ''}</p>
-                `;
-            }
-            
-            DOM.lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-    });
-    
-    // Close lightbox
-    function closeLightbox() {
-        DOM.lightbox.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-    
-    if (lightboxClose) {
-        lightboxClose.addEventListener('click', closeLightbox);
-    }
-    
-    DOM.lightbox.addEventListener('click', (e) => {
-        if (e.target === DOM.lightbox) {
-            closeLightbox();
+    galleryItems.forEach((item, itemIndex) => {
+        const imagesContainer = item.querySelector('.gallery-images');
+        const images = imagesContainer.querySelectorAll('.image-wrapper');
+        const totalImages = images.length;
+        
+        // Skip if only one image
+        if (totalImages <= 1) return;
+        
+        let currentIndex = 0;
+        let autoPlayInterval = null;
+        
+        // Create navigation elements
+        createNavigation(item, imagesContainer, totalImages);
+        
+        // Get navigation elements
+        const prevBtn = item.querySelector('.gallery-nav.prev');
+        const nextBtn = item.querySelector('.gallery-nav.next');
+        const dots = item.querySelectorAll('.gallery-dot');
+        const counter = item.querySelector('.gallery-counter');
+        
+        // Set first image as active
+        images[0].classList.add('active');
+        if (dots.length > 0) dots[0].classList.add('active');
+        updateCounter();
+        
+        // Previous button click
+        if (prevBtn) {
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goToImage(currentIndex - 1);
+            });
         }
-    });
-    
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && DOM.lightbox.classList.contains('active')) {
-            closeLightbox();
+        
+        // Next button click
+        if (nextBtn) {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goToImage(currentIndex + 1);
+            });
+        }
+        
+        // Dots click
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goToImage(index);
+            });
+        });
+        
+        // Touch/Swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        imagesContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            stopAutoPlay();
+        }, { passive: true });
+        
+        imagesContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+        
+        // Mouse enter/leave for auto-play
+        item.addEventListener('mouseenter', () => {
+            stopAutoPlay();
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            // Optional: restart auto-play on mouse leave
+            // startAutoPlay();
+        });
+        
+        // Keyboard navigation when focused
+        item.setAttribute('tabindex', '0');
+        item.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                goToImage(currentIndex - 1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                goToImage(currentIndex + 1);
+            }
+        });
+        
+        // Go to specific image
+        function goToImage(index) {
+            // Handle wrapping
+            if (index < 0) {
+                index = totalImages - 1;
+            } else if (index >= totalImages) {
+                index = 0;
+            }
+            
+            // Remove active from all
+            images.forEach(img => img.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Set new active
+            currentIndex = index;
+            images[currentIndex].classList.add('active');
+            if (dots[currentIndex]) dots[currentIndex].classList.add('active');
+            
+            // Update counter
+            updateCounter();
+        }
+        
+        // Update counter display
+        function updateCounter() {
+            if (counter) {
+                counter.textContent = `${currentIndex + 1} / ${totalImages}`;
+            }
+        }
+        
+        // Handle swipe gesture
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next image
+                    goToImage(currentIndex + 1);
+                } else {
+                    // Swipe right - previous image
+                    goToImage(currentIndex - 1);
+                }
+            }
+        }
+        
+        // Auto-play functions (optional)
+        function startAutoPlay() {
+            if (autoPlayInterval) return;
+            autoPlayInterval = setInterval(() => {
+                goToImage(currentIndex + 1);
+            }, 4000);
+        }
+        
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
         }
     });
 }
+
+// Create navigation elements dynamically
+function createNavigation(item, container, totalImages) {
+    // Create previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'gallery-nav prev';
+    prevBtn.setAttribute('aria-label', 'Previous image');
+    prevBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+        </svg>
+    `;
+    
+    // Create next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'gallery-nav next';
+    nextBtn.setAttribute('aria-label', 'Next image');
+    nextBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+        </svg>
+    `;
+    
+    // Create dots container
+    const dotsContainer = document.createElement('div');
+    dotsContainer.className = 'gallery-dots';
+    
+    for (let i = 0; i < totalImages; i++) {
+        const dot = document.createElement('button');
+        dot.className = 'gallery-dot';
+        dot.setAttribute('aria-label', `Go to image ${i + 1}`);
+        dotsContainer.appendChild(dot);
+    }
+    
+    // Create counter
+    const counter = document.createElement('span');
+    counter.className = 'gallery-counter';
+    counter.textContent = `1 / ${totalImages}`;
+    
+    // Append elements to container
+    container.appendChild(prevBtn);
+    container.appendChild(nextBtn);
+    container.appendChild(dotsContainer);
+    container.appendChild(counter);
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initGalleryNavigation();
+});
+
+// Or add to existing init function:
+// function init() {
+//     // ... other initializations
+//     initGalleryNavigation();
+// }
 
 // =====================
 // Statistics Counter

@@ -1480,7 +1480,7 @@ html[lang="en"] .quote-card p {
 }
 
 /* ===================== */
-/* Gallery Section - Two Images Support */
+/* Gallery Section - Multi-Image Support Fixed */
 /* ===================== */
 .gallery {
     background: var(--bg-light);
@@ -1512,7 +1512,7 @@ html[lang="en"] .quote-card p {
     grid-column: span 2;
 }
 
-/* Gallery Images Container - Two Images */
+/* Gallery Images Container */
 .gallery-images {
     position: relative;
     width: 100%;
@@ -1524,35 +1524,25 @@ html[lang="en"] .quote-card p {
     aspect-ratio: 16/9;
 }
 
-/* Image Wrapper */
+/* Image Wrapper - All images stacked */
 .gallery-images .image-wrapper {
     position: absolute;
     inset: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 1;
 }
 
-/* First Image - Visible by default */
+/* First image visible by default */
 .gallery-images .image-wrapper:first-child {
     opacity: 1;
     z-index: 2;
 }
 
-/* Second Image - Hidden by default */
-.gallery-images .image-wrapper:last-child {
-    opacity: 0;
-    z-index: 1;
-    transform: scale(1.1);
-}
-
-/* Hover Effect - Show second image */
-.gallery-item:hover .gallery-images .image-wrapper:first-child {
-    opacity: 0;
-    transform: scale(0.95);
-}
-
-.gallery-item:hover .gallery-images .image-wrapper:last-child {
+/* Active image */
+.gallery-images .image-wrapper.active {
     opacity: 1;
-    transform: scale(1);
+    z-index: 2;
 }
 
 /* Image Styling */
@@ -1560,16 +1550,71 @@ html[lang="en"] .quote-card p {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.gallery-item:hover .gallery-images .image-wrapper img {
-    transform: scale(1.05);
+/* Navigation Arrows */
+.gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Image Indicator Dots */
-.gallery-images::after {
-    content: '';
+.gallery-nav:hover {
+    background: var(--color-accent);
+}
+
+.gallery-nav:hover svg {
+    stroke: white;
+}
+
+.gallery-nav svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--text-primary);
+    stroke-width: 2;
+    fill: none;
+}
+
+.gallery-nav.prev {
+    left: 10px;
+}
+
+.gallery-nav.next {
+    right: 10px;
+}
+
+html[dir="ltr"] .gallery-nav.prev svg {
+    transform: rotate(180deg);
+}
+
+html[dir="rtl"] .gallery-nav.next svg {
+    transform: rotate(180deg);
+}
+
+.gallery-item:hover .gallery-nav {
+    opacity: 1;
+}
+
+.gallery-nav:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Dots Indicator */
+.gallery-dots {
     position: absolute;
     bottom: 12px;
     left: 50%;
@@ -1577,45 +1622,50 @@ html[lang="en"] .quote-card p {
     display: flex;
     gap: 6px;
     z-index: 10;
-    pointer-events: none;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
 }
 
-.gallery-item::before {
-    content: '';
-    position: absolute;
-    bottom: 12px;
-    left: calc(50% - 10px);
+.gallery-dot {
     width: 8px;
     height: 8px;
-    background: white;
     border-radius: 50%;
-    z-index: 10;
-    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    padding: 0;
 }
 
-.gallery-item::after {
-    content: '';
+.gallery-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.gallery-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+/* Image Counter */
+.gallery-counter {
     position: absolute;
-    bottom: 12px;
-    left: calc(50% + 2px);
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-family: var(--font-english);
     z-index: 10;
-    opacity: 0.4;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
 }
 
-.gallery-item:hover::before {
-    opacity: 0.4;
-}
-
-.gallery-item:hover::after {
-    opacity: 0.9;
+html[dir="ltr"] .gallery-counter {
+    right: auto;
+    left: 12px;
 }
 
 /* Gallery Caption */
@@ -1638,6 +1688,7 @@ html[lang="en"] .quote-card p {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--text-light);
     z-index: 5;
+    pointer-events: none;
 }
 
 .gallery-item:hover .gallery-caption {
@@ -1665,46 +1716,7 @@ html[lang="en"] .gallery-caption h4 {
     overflow: hidden;
 }
 
-/* Swipe Indicator */
-.gallery-item .swipe-indicator {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    padding: 6px 10px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    z-index: 10;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.3s ease;
-}
-
-html[dir="ltr"] .gallery-item .swipe-indicator {
-    right: auto;
-    left: 12px;
-}
-
-.gallery-item:hover .swipe-indicator {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.swipe-indicator svg {
-    width: 16px;
-    height: 16px;
-    stroke: white;
-}
-
-.swipe-indicator span {
-    font-size: 0.75rem;
-    color: white;
-}
-
-/* Gallery Responsive */
+/* Responsive */
 @media (max-width: 968px) {
     .gallery-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1712,6 +1724,16 @@ html[dir="ltr"] .gallery-item .swipe-indicator {
     
     .gallery-item.large {
         grid-column: span 2;
+    }
+    
+    .gallery-nav {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .gallery-nav svg {
+        width: 18px;
+        height: 18px;
     }
 }
 
@@ -1733,13 +1755,19 @@ html[dir="ltr"] .gallery-item .swipe-indicator {
         aspect-ratio: 4/3;
     }
     
+    /* Always show navigation on mobile */
+    .gallery-nav {
+        opacity: 0.8;
+    }
+    
     .gallery-caption {
+        position: relative;
         opacity: 1;
         transform: translateY(0);
-        position: relative;
         background: var(--bg-cream);
         color: var(--text-primary);
         padding: var(--space-md);
+        pointer-events: auto;
     }
     
     .gallery-caption h4 {
@@ -1749,79 +1777,6 @@ html[dir="ltr"] .gallery-item .swipe-indicator {
     .gallery-caption p {
         color: var(--text-secondary);
         max-height: none;
-    }
-    
-    /* Touch swipe hint on mobile */
-    .gallery-item::before,
-    .gallery-item::after {
-        bottom: auto;
-        top: 12px;
-    }
-}
-
-/* Animation for image transition */
-@keyframes fadeSwitch {
-    0% { opacity: 1; }
-    50% { opacity: 0; }
-    100% { opacity: 1; }
-}
-
-/* Alternative: Slide transition */
-.gallery-item.slide-effect .gallery-images .image-wrapper:first-child {
-    transform: translateX(0);
-}
-
-.gallery-item.slide-effect .gallery-images .image-wrapper:last-child {
-    transform: translateX(100%);
-}
-
-.gallery-item.slide-effect:hover .gallery-images .image-wrapper:first-child {
-    transform: translateX(-100%);
-    opacity: 1;
-}
-
-.gallery-item.slide-effect:hover .gallery-images .image-wrapper:last-child {
-    transform: translateX(0);
-    opacity: 1;
-}
-
-/* Alternative: Flip transition */
-.gallery-item.flip-effect .gallery-images {
-    perspective: 1000px;
-}
-
-.gallery-item.flip-effect .gallery-images .image-wrapper {
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-}
-
-.gallery-item.flip-effect .gallery-images .image-wrapper:first-child {
-    transform: rotateY(0deg);
-}
-
-.gallery-item.flip-effect .gallery-images .image-wrapper:last-child {
-    transform: rotateY(180deg);
-}
-
-.gallery-item.flip-effect:hover .gallery-images .image-wrapper:first-child {
-    transform: rotateY(-180deg);
-    opacity: 1;
-}
-
-.gallery-item.flip-effect:hover .gallery-images .image-wrapper:last-child {
-    transform: rotateY(0deg);
-    opacity: 1;
-}
-
-/* Print styles */
-@media print {
-    .gallery-images .image-wrapper:last-child {
-        display: none;
-    }
-    
-    .gallery-item::before,
-    .gallery-item::after {
-        display: none;
     }
 }
 
